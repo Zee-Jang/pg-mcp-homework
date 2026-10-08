@@ -1,0 +1,525 @@
+{
+  "title": "PG MCP 第二次作业运行证据",
+  "generated_at": "2026-10-08T13:35:55+08:00",
+  "mode": "真实 PostgreSQL + 真实 MCP 内存传输; 外部 LLM 使用固定输出测试替身, 未调用付费 API",
+  "postgres_version": "PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit",
+  "cases": [
+    {
+      "name": "销售库路由",
+      "passed": true,
+      "input": {
+        "question": "统计订单总额",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": null,
+      "model_calls": 1,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT current_database() AS db, SUM(amount) AS total, COUNT(*) AS n FROM orders",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "db",
+            "total",
+            "n"
+          ],
+          "rows": [
+            {
+              "db": "homework_sales",
+              "total": 400.0,
+              "n": 3
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 5.457899998873472
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 0,
+        "request_id": "a286a3fd-f0e7-440f-8132-a6788cef1328",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "归档库路由",
+      "passed": true,
+      "input": {
+        "question": "统计订单总额",
+        "return_type": "result",
+        "database": "homework_archive"
+      },
+      "expected_code": null,
+      "model_calls": 1,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT current_database() AS db, SUM(amount) AS total, COUNT(*) AS n FROM orders",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "db",
+            "total",
+            "n"
+          ],
+          "rows": [
+            {
+              "db": "homework_archive",
+              "total": 1000.0,
+              "n": 2
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 3.201300001819618
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 0,
+        "request_id": "90ce5166-59ad-4e92-9b70-58bd20e65081",
+        "database": "homework_archive"
+      }
+    },
+    {
+      "name": "普通字段查询",
+      "passed": true,
+      "input": {
+        "question": "查询用户姓名",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": null,
+      "model_calls": 1,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT id, name FROM users ORDER BY id",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "rows": [
+            {
+              "id": 1,
+              "name": "Alice"
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 3.8704999969922937
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 0,
+        "request_id": "9a786b18-0cf1-42ab-9e8a-d9efa003d08f",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "敏感列别名拦截",
+      "passed": true,
+      "input": {
+        "question": "查询用户密码",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": "security_violation",
+      "model_calls": 1,
+      "response": {
+        "success": false,
+        "generated_sql": null,
+        "validation": null,
+        "data": null,
+        "error": {
+          "code": "security_violation",
+          "message": "Blocked or unresolved column 'users.password' provenance",
+          "details": {}
+        },
+        "confidence": 0,
+        "tokens_used": 0,
+        "request_id": "94945b2c-bd81-453b-a8cf-82d82b80a82b",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "通配符拦截",
+      "passed": true,
+      "input": {
+        "question": "查询用户全部字段",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": "security_violation",
+      "model_calls": 1,
+      "response": {
+        "success": false,
+        "generated_sql": null,
+        "validation": null,
+        "data": null,
+        "error": {
+          "code": "security_violation",
+          "message": "Wildcard may expose a blocked column",
+          "details": {}
+        },
+        "confidence": 0,
+        "tokens_used": 0,
+        "request_id": "d9be8c6f-1369-465d-a8d0-14eae69b7e3e",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "敏感表拦截",
+      "passed": true,
+      "input": {
+        "question": "读取审计记录",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": "security_violation",
+      "model_calls": 1,
+      "response": {
+        "success": false,
+        "generated_sql": null,
+        "validation": null,
+        "data": null,
+        "error": {
+          "code": "security_violation",
+          "message": "Access to table 'public.audit_log' is not allowed",
+          "details": {}
+        },
+        "confidence": 0,
+        "tokens_used": 0,
+        "request_id": "b5d96810-9fce-4ccc-bfae-af62c049cba3",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "EXPLAIN ANALYZE 拦截",
+      "passed": true,
+      "input": {
+        "question": "执行分析查询计划",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": "security_violation",
+      "model_calls": 1,
+      "response": {
+        "success": false,
+        "generated_sql": null,
+        "validation": null,
+        "data": null,
+        "error": {
+          "code": "security_violation",
+          "message": "Only plain EXPLAIN SELECT is supported",
+          "details": {}
+        },
+        "confidence": 0,
+        "tokens_used": 0,
+        "request_id": "4fb3e6b3-b317-471a-ba2c-e09472746880",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "安全 EXPLAIN",
+      "passed": true,
+      "input": {
+        "question": "查看订单查询计划",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": null,
+      "model_calls": 1,
+      "response": {
+        "success": true,
+        "generated_sql": "EXPLAIN SELECT id FROM orders",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "QUERY PLAN"
+          ],
+          "rows": [
+            {
+              "QUERY PLAN": "Seq Scan on orders  (cost=0.00..20.20 rows=1020 width=4)"
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 3.2472000020788983
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 0,
+        "request_id": "73218bba-7425-42aa-bf59-84bdba8073bc",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "未知数据库",
+      "passed": true,
+      "input": {
+        "question": "统计订单总额",
+        "return_type": "result",
+        "database": "not_configured"
+      },
+      "expected_code": "database_error",
+      "model_calls": 0,
+      "response": {
+        "success": false,
+        "generated_sql": null,
+        "validation": null,
+        "data": null,
+        "error": {
+          "code": "database_error",
+          "message": "Database 'not_configured' not found",
+          "details": {
+            "requested_database": "not_configured",
+            "available_databases": [
+              "homework_sales",
+              "homework_archive"
+            ]
+          }
+        },
+        "confidence": 0,
+        "tokens_used": 0,
+        "request_id": "592b9deb-b251-4e4e-abbd-0738a8623ec0",
+        "database": null
+      }
+    },
+    {
+      "name": "未指定数据库",
+      "passed": true,
+      "input": {
+        "question": "统计订单总额",
+        "return_type": "result"
+      },
+      "expected_code": "database_error",
+      "model_calls": 0,
+      "response": {
+        "success": false,
+        "generated_sql": null,
+        "validation": null,
+        "data": null,
+        "error": {
+          "code": "database_error",
+          "message": "Multiple databases available, please specify which to query",
+          "details": {
+            "available_databases": [
+              "homework_sales",
+              "homework_archive"
+            ]
+          }
+        },
+        "confidence": 0,
+        "tokens_used": 0,
+        "request_id": "784c76cd-57e6-449c-af19-b729511f9384",
+        "database": null
+      }
+    },
+    {
+      "name": "临时故障退避重试",
+      "passed": true,
+      "input": {
+        "question": "模拟临时超时后重试",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": null,
+      "model_calls": 2,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT COUNT(*) AS n FROM orders",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "n"
+          ],
+          "rows": [
+            {
+              "n": 3
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 2.1740000011050142
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 0,
+        "request_id": "18612a29-61cf-4359-9eeb-9b2d1276a8d1",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "仅返回 SQL",
+      "passed": true,
+      "input": {
+        "question": "统计订单总额",
+        "return_type": "sql",
+        "database": "homework_sales"
+      },
+      "expected_code": null,
+      "model_calls": 1,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT current_database() AS db, SUM(amount) AS total, COUNT(*) AS n FROM orders",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": null,
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 0,
+        "request_id": "17152653-ae70-4ce3-aba0-688b9a36b3f7",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "超限请求拒绝",
+      "passed": true,
+      "input": {
+        "question": "统计订单总额",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": "rate_limit_exceeded",
+      "model_calls": 0,
+      "response": {
+        "success": false,
+        "generated_sql": null,
+        "validation": null,
+        "data": null,
+        "error": {
+          "code": "rate_limit_exceeded",
+          "message": "Query concurrency queue timeout",
+          "details": {}
+        },
+        "confidence": 0,
+        "tokens_used": 0,
+        "request_id": "9b40a3eb-2f9f-4e2e-aa0c-6912df701588",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "并发槽释放",
+      "passed": true,
+      "input": {
+        "question": "占用一个并发槽",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": null,
+      "model_calls": 1,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT COUNT(*) AS n FROM orders",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "n"
+          ],
+          "rows": [
+            {
+              "n": 3
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 1.3942000005044974
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 0,
+        "request_id": "7e068859-ffff-4544-8696-2d8982623377",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "限流后恢复查询",
+      "passed": true,
+      "input": {
+        "question": "统计订单总额",
+        "return_type": "result",
+        "database": "homework_sales"
+      },
+      "expected_code": null,
+      "model_calls": 1,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT current_database() AS db, SUM(amount) AS total, COUNT(*) AS n FROM orders",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "db",
+            "total",
+            "n"
+          ],
+          "rows": [
+            {
+              "db": "homework_sales",
+              "total": 400.0,
+              "n": 3
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 1.3914000010117888
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 0,
+        "request_id": "d216cbda-4171-40d3-9c98-b2755b0c1423",
+        "database": "homework_sales"
+      }
+    }
+  ],
+  "metrics_delta": {
+    "pg_mcp_query_requests_total": 15.0,
+    "pg_mcp_llm_calls_total": 13.0,
+    "pg_mcp_db_query_duration_seconds_count": 7.0,
+    "pg_mcp_query_duration_seconds_count": 15.0,
+    "pg_mcp_sql_rejected_total": 4.0
+  },
+  "request_tracing_passed": true,
+  "metrics_passed": true,
+  "all_passed": true
+}

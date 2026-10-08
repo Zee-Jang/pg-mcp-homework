@@ -1,0 +1,5 @@
+src\pg_mcp\models\query.py:214: error: Name "to_dict" already defined on line 160  [no-redef]
+src\pg_mcp\services\sql_generator.py:189: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src\pg_mcp\services\sql_generator.py:197: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src\pg_mcp\server.py:42: error: Unused "type: ignore" comment  [unused-ignore]
+Found 4 errors in 3 files (checked 30 source files)

@@ -1,0 +1,17 @@
+PASS | 销售库路由
+PASS | 归档库路由
+PASS | 普通字段查询
+PASS | 敏感列别名拦截
+PASS | 通配符拦截
+PASS | 敏感表拦截
+PASS | EXPLAIN ANALYZE 拦截
+PASS | 安全 EXPLAIN
+PASS | 未知数据库
+PASS | 未指定数据库
+PASS | 临时故障退避重试
+PASS | 仅返回 SQL
+PASS | 超限请求拒绝
+PASS | 并发槽释放
+PASS | 限流后恢复查询
+Evidence saved: D:\sdd\work\rzx_task\pg-mcp-homework\w5\pg-mcp\docs\evidence\demo.json
+Metrics: {"pg_mcp_query_requests_total": 15.0, "pg_mcp_llm_calls_total": 13.0, "pg_mcp_db_query_duration_seconds_count": 7.0, "pg_mcp_query_duration_seconds_count": 15.0, "pg_mcp_sql_rejected_total": 4.0}
