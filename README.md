@@ -12,7 +12,7 @@
 
 ## 运行
 
-环境：Python 3.14+、uv、PostgreSQL。测试数据库可以通过 Docker 创建：
+环境：Python 3.14+、uv、PostgreSQL。项目提供 Docker Compose 配置用于创建测试数据库：
 
 ```powershell
 uv sync --extra dev
@@ -96,7 +96,7 @@ Windows / Python 3.14.6 / PostgreSQL 17.11 下，347 项通过、46 项跳过，
 
 另外，通过 `demo_live.py` 使用 Qwen3.6-27B 完成 4 个真实模型场景：销售库统计、归档库统计、普通字段查询和密码列拦截，4/4 通过。服务记录 4 次模型调用、3 次数据库查询、1 次安全拒绝，共 5561 tokens；单次请求耗时约 21–37 秒。本次关闭模型结果复核，SQL 生成、MCP 通信和数据库执行均走实际流程。响应见 [live-demo.json](docs/evidence/live-demo.json)。
 
-46 项原有外部模型集成测试未启用，运行它们需要匹配各自的数据库配置并设置 `PG_MCP_LIVE_TESTS=1`。上述 4 个真实模型场景单独运行，不包含在 pytest 数量中。本地验证使用独立的 PostgreSQL 实例；Docker Compose 已检查配置，尚未验证容器启动。
+46 项原有外部模型集成测试未启用，运行它们需要匹配各自的数据库配置并设置 `PG_MCP_LIVE_TESTS=1`。上述 4 个真实模型场景单独运行，不包含在 pytest 数量中。本次验证使用本地独立运行的 PostgreSQL 17.11。
 
 [实现与测试记录](docs/homework.md) · [pytest 输出](docs/evidence/pytest.txt) · [覆盖率数据](docs/evidence/coverage.json)
 

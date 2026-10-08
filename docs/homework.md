@@ -43,7 +43,7 @@ EXPLAIN 默认关闭。开启后只接受校验通过的普通 SELECT/WITH，拒
 
 [pytest 输出](evidence/pytest.txt) · [JUnit XML](evidence/pytest.xml) · [覆盖率](evidence/coverage.json) · [Ruff](evidence/lint.txt) · [Mypy](evidence/types.txt)
 
-pytest 中的 PostgreSQL 测试和 15 个回归演示场景使用固定模型输出（Mock）。46 项原有外部模型测试未启用；真实模型通过 `demo_live.py` 单独联调。PostgreSQL 在本地独立启动；Docker Compose 已检查配置，尚未验证容器启动。
+pytest 中的 PostgreSQL 测试和 15 个回归演示场景使用固定模型输出（Mock）。46 项原有外部模型测试未启用；真实模型通过 `demo_live.py` 单独联调。本次验证使用本地独立运行的 PostgreSQL 17.11。
 
 2026-10-08 使用 Qwen3.6-27B，经独立 stdio 服务进程完成以下查询：
 
