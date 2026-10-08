@@ -8,7 +8,7 @@
 - 表、列和 EXPLAIN 限制在 SQL 执行前生效，检查别名、子查询、通配符、整行引用及关联查询。
 - 查询和模型调用分别限制并发。临时调用失败按配置退避重试，认证错误和安全拒绝不重试。
 - 响应和日志使用同一个 request_id，Prometheus 记录请求数、调用耗时和安全拒绝次数。日志写入 stderr。
-- 合并重复的 to_dict 方法，修复扁平环境变量加载、配置开关和错误响应中的 token 用量。
+- 合并重复的 to_dict 方法，修复扁平环境变量加载、配置开关和错误响应中的 token 用量；Schema 缓存按配置限制容量，淘汰最久未访问的条目。
 
 ## 运行
 
@@ -73,7 +73,8 @@ uv run python scripts/demo_live.py
 | RESILIENCE_QUEUE_TIMEOUT | 等待并发槽的超时时间 |
 | RESILIENCE_MAX_RETRIES / RESILIENCE_RETRY_DELAY | 重试次数与初始退避时间 |
 | RESILIENCE_BACKOFF_FACTOR / RESILIENCE_MAX_RETRY_DELAY | 退避倍率与延迟上限 |
-| CACHE_ENABLED / VALIDATION_MAX_QUESTION_LENGTH | Schema 缓存开关与问题长度限制 |
+| CACHE_ENABLED / CACHE_MAX_SIZE | Schema 缓存开关与容量上限，达到上限后按最近使用顺序淘汰 |
+| VALIDATION_MAX_QUESTION_LENGTH | 问题长度限制 |
 | OBSERVABILITY_METRICS_ENABLED | 指标统计和 HTTP 端点开关 |
 
 完整示例见 [.env.homework.example](.env.homework.example)。查询在只读事务中执行，`SECURITY_ALLOW_WRITE_OPERATIONS=true` 会报配置错误。视图、函数和扩展内部的访问权限仍由数据库角色控制。
@@ -91,7 +92,7 @@ uv run ruff check src tests scripts
 uv run mypy src
 ```
 
-Windows / Python 3.14.6 / PostgreSQL 17.11 下，344 项通过、46 项跳过，其中 14 项为 PostgreSQL 与 MCP 集成测试。整体覆盖率 90.52%，SQL 校验器覆盖率 96.43%；Ruff、Mypy 均通过。
+Windows / Python 3.14.6 / PostgreSQL 17.11 下，347 项通过、46 项跳过，其中 14 项为 PostgreSQL 与 MCP 集成测试。整体覆盖率 90.57%，SQL 校验器覆盖率 96.43%；Ruff、Mypy 均通过。
 
 另外，通过 `demo_live.py` 使用 Qwen3.6-27B 完成 4 个真实模型场景：销售库统计、归档库统计、普通字段查询和密码列拦截，4/4 通过。服务记录 4 次模型调用、3 次数据库查询、1 次安全拒绝，共 5561 tokens；单次请求耗时约 21–37 秒。本次关闭模型结果复核，SQL 生成、MCP 通信和数据库执行均走实际流程。响应见 [live-demo.json](docs/evidence/live-demo.json)。
 

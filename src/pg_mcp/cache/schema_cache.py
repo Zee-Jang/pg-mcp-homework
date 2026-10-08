@@ -75,7 +75,10 @@ class SchemaCache:
             self._cache_timestamps.pop(database_name, None)
             return None
 
-        return self._cache[database_name]
+        # Insertion order tracks recency; reading does not extend the schema TTL.
+        schema = self._cache.pop(database_name)
+        self._cache[database_name] = schema
+        return schema
 
     async def load(
         self,
@@ -105,6 +108,12 @@ class SchemaCache:
         schema = await introspector.introspect()
 
         if self.config.enabled:
+            # Refreshing an existing entry must not evict another database.
+            self._cache.pop(database_name, None)
+            while len(self._cache) >= self.config.max_size:
+                oldest = next(iter(self._cache))
+                self._cache.pop(oldest)
+                self._cache_timestamps.pop(oldest, None)
             self._cache[database_name] = schema
             self._cache_timestamps[database_name] = datetime.now(UTC)
 
