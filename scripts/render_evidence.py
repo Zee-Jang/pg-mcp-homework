@@ -133,7 +133,7 @@ def render() -> None:
     </div>
     <div class="grid">
       <div class="panel"><h2>运行指标增量</h2><table class="compact"><tr><th>Prometheus 指标</th><th>增量</th></tr>{metrics}</table></div>
-      <div class="panel"><h2>测试结果</h2><pre>{escape(test_summary)}</pre><p class="muted">未配置模型密钥，真实模型集成测试跳过。</p></div>
+      <div class="panel"><h2>测试结果</h2><pre>{escape(test_summary)}</pre><p class="muted">46 项旧外部模型测试未启用；真实模型联调单独记录于 live-demo.json。</p></div>
     </div>
     <div class="panel"><h2>异常恢复与链路追踪</h2><table class="compact">
       <tr><td>临时故障退避重试</td><td>{retry["model_calls"]} 次模型测试组件调用后查询成功</td></tr>

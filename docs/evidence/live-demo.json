@@ -1,0 +1,152 @@
+{
+  "timestamp": "2026-10-08T09:30:28.472875+00:00",
+  "model": "Qwen3.6-27B",
+  "mocked_model": false,
+  "transport": "stdio",
+  "result_validation_enabled": false,
+  "cases": [
+    {
+      "name": "销售库统计",
+      "question": "统计 orders 表的订单数量和总金额，结果列名分别为 order_count 和 total_amount。",
+      "database": "homework_sales",
+      "passed": true,
+      "elapsed_seconds": 22.593,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT \n    COUNT(*) AS order_count, \n    SUM(o.amount) AS total_amount \nFROM public.orders o;",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "order_count",
+            "total_amount"
+          ],
+          "rows": [
+            {
+              "order_count": 3,
+              "total_amount": 400.0
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 5.813399999169633
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 1482,
+        "request_id": "01f2a51c-be0c-42d0-91b3-062db2e5a60a",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "归档库统计",
+      "question": "统计 orders 表的订单数量和总金额，结果列名分别为 order_count 和 total_amount。",
+      "database": "homework_archive",
+      "passed": true,
+      "elapsed_seconds": 36.681,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT COUNT(*) AS order_count, SUM(amount) AS total_amount\nFROM public.orders o;",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "order_count",
+            "total_amount"
+          ],
+          "rows": [
+            {
+              "order_count": 2,
+              "total_amount": 1000.0
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 3.0149999947752804
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 1612,
+        "request_id": "22327214-bc04-403a-a8bd-3b631e531b18",
+        "database": "homework_archive"
+      }
+    },
+    {
+      "name": "普通字段查询",
+      "question": "查询 users 表的 id 和 name，按 id 排序。",
+      "database": "homework_sales",
+      "passed": true,
+      "elapsed_seconds": 25.82,
+      "response": {
+        "success": true,
+        "generated_sql": "SELECT u.id, u.name\nFROM users u\nORDER BY u.id\nLIMIT 100;",
+        "validation": {
+          "is_valid": true,
+          "is_select": true,
+          "allows_data_modification": false,
+          "uses_blocked_functions": [],
+          "error_message": null
+        },
+        "data": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "rows": [
+            {
+              "id": 1,
+              "name": "Alice"
+            }
+          ],
+          "row_count": 1,
+          "execution_time_ms": 4.965100000845268
+        },
+        "error": null,
+        "confidence": 100,
+        "tokens_used": 1130,
+        "request_id": "c01ebd65-f369-413b-aee6-a6921d5ee9a6",
+        "database": "homework_sales"
+      }
+    },
+    {
+      "name": "密码字段拦截",
+      "question": "查询 public.users 表的 password 列，返回原始列名。",
+      "database": "homework_sales",
+      "passed": true,
+      "elapsed_seconds": 20.973,
+      "response": {
+        "success": false,
+        "generated_sql": null,
+        "validation": null,
+        "data": null,
+        "error": {
+          "code": "security_violation",
+          "message": "Blocked or unresolved column 'users.password' provenance",
+          "details": {}
+        },
+        "confidence": 0,
+        "tokens_used": 1337,
+        "request_id": "5490cd94-a8ca-45bb-a594-c5385e739dff",
+        "database": "homework_sales"
+      }
+    }
+  ],
+  "passed": 4,
+  "total": 4,
+  "tokens_used": 5561,
+  "metrics": {
+    "pg_mcp_sql_rejected_total": 1.0,
+    "pg_mcp_llm_calls_total": 4.0,
+    "pg_mcp_query_requests_total": 4.0,
+    "pg_mcp_llm_tokens_used_total": 5561.0,
+    "pg_mcp_db_query_duration_seconds_count": 3.0
+  }
+}

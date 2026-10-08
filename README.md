@@ -30,7 +30,7 @@ uv run python scripts/demo_homework.py
 
 ```powershell
 Copy-Item .env.homework.example .env
-# 在 .env 中设置 OPENAI_API_KEY 和 OPENAI_MODEL
+# 在 .env 中设置 OPENAI_API_KEY、OPENAI_MODEL 和可选的 OPENAI_BASE_URL
 uv run python -m pg_mcp
 ```
 
@@ -51,11 +51,22 @@ uv run python -m pg_mcp
 
 查询时指定 `homework_sales` 或 `homework_archive`。示例配置的监控地址为 `http://127.0.0.1:19139/metrics`。
 
+模型网关使用兼容 OpenAI 的接口，`OPENAI_BASE_URL` 需要包含 `/v1`；不设置时沿用 SDK 默认地址。配置完成、数据库启动后，可直接运行自然语言查询联调：
+
+```powershell
+uv run python scripts/demo_live.py
+```
+
+脚本通过 stdio 启动服务，分别检查双库订单统计、普通字段查询和密码字段拦截，实际响应写入 `docs/evidence/live-demo.json`。
+
+使用 Qwen3.6-27B 联调时，默认 2000-token 预算曾出现返回正文为空的情况，本地配置使用 `OPENAI_MAX_TOKENS=4096`、`OPENAI_TIMEOUT=90`。模型调用耗时不固定，失败响应保留错误码和 token 用量。
+
 ## 配置
 
 | 配置项 | 说明 |
 | --- | --- |
 | DATABASES | 数据库配置的 JSON 数组；未设置时使用 DATABASE_* 单库配置 |
+| OPENAI_API_KEY / OPENAI_MODEL / OPENAI_BASE_URL | 模型密钥、模型名、兼容接口地址；SQL 生成和结果复核共用 |
 | SECURITY_BLOCKED_TABLES / SECURITY_BLOCKED_COLUMNS | 禁止访问的表和列，使用 JSON 数组 |
 | SECURITY_ALLOW_EXPLAIN | 默认关闭，开启后只支持普通 EXPLAIN SELECT/WITH |
 | RESILIENCE_QUERY_CONCURRENCY / RESILIENCE_LLM_CONCURRENCY | 查询和模型调用的并发上限 |
@@ -80,14 +91,18 @@ uv run ruff check src tests scripts
 uv run mypy src
 ```
 
-Windows / Python 3.14.6 / PostgreSQL 17.11 下，341 项通过、46 项跳过，其中 14 项为 PostgreSQL 与 MCP 集成测试。整体覆盖率 90.52%，SQL 校验器覆盖率 96.43%；Ruff、Mypy 均通过。
+Windows / Python 3.14.6 / PostgreSQL 17.11 下，344 项通过、46 项跳过，其中 14 项为 PostgreSQL 与 MCP 集成测试。整体覆盖率 90.52%，SQL 校验器覆盖率 96.43%；Ruff、Mypy 均通过。
 
-46 项真实模型集成测试未运行。启用这些测试需要配置数据库和模型密钥，并设置 `PG_MCP_LIVE_TESTS=1`。本地验证使用独立的 PostgreSQL 实例；Docker Compose 已检查配置，尚未验证容器启动。
+另外，通过 `demo_live.py` 使用 Qwen3.6-27B 完成 4 个真实模型场景：销售库统计、归档库统计、普通字段查询和密码列拦截，4/4 通过。服务记录 4 次模型调用、3 次数据库查询、1 次安全拒绝，共 5561 tokens；单次请求耗时约 21–37 秒。本次关闭模型结果复核，SQL 生成、MCP 通信和数据库执行均走实际流程。响应见 [live-demo.json](docs/evidence/live-demo.json)。
+
+46 项原有外部模型集成测试未启用，运行它们需要匹配各自的数据库配置并设置 `PG_MCP_LIVE_TESTS=1`。上述 4 个真实模型场景单独运行，不包含在 pytest 数量中。本地验证使用独立的 PostgreSQL 实例；Docker Compose 已检查配置，尚未验证容器启动。
 
 [实现与测试记录](docs/homework.md) · [pytest 输出](docs/evidence/pytest.txt) · [覆盖率数据](docs/evidence/coverage.json)
 
 ## 运行结果
 
-![双库路由与访问控制](docs/evidence/01-demo.png)
+![自然语言查询与双库路由](docs/evidence/03-live-query.png)
 
-![回归测试与运行观测](docs/evidence/02-verification.png)
+![普通查询与敏感字段拦截](docs/evidence/04-live-security.png)
+
+[固定模型输出的回归演示](docs/evidence/01-demo.png) · [测试与覆盖率](docs/evidence/02-verification.png)

@@ -20,15 +20,18 @@ EXPLAIN 默认关闭。开启后只接受校验通过的普通 SELECT/WITH，拒
 
 响应模型只保留一个 to_dict 方法，检查成功、错误和数据字段的一致性。失败响应也保留已统计的 token 用量。环境变量和 .env 中的扁平配置映射到各子配置，缓存开关和问题长度限制接入请求流程。
 
+增加 `OPENAI_BASE_URL`，SQL 生成器和结果复核器使用相同的兼容接口地址；未设置时使用 SDK 默认地址。配置加载与两个客户端的地址传递分别有回归测试。
+
 ## 测试结果
 
 环境：Windows、Python 3.14.6、PostgreSQL 17.11。
 
 | 检查项 | 结果 |
 | --- | --- |
-| pytest | 341 通过，46 跳过，0 失败 |
+| pytest | 344 通过，46 跳过，0 失败 |
 | PostgreSQL / MCP 集成测试 | 14 通过，包含在上述数量中 |
-| 演示脚本 | 15/15 通过 |
+| 固定模型输出的回归演示 | 15/15 通过 |
+| Qwen3.6-27B 真实模型联调 | 4/4 通过，单独运行 |
 | 整体覆盖率（行与分支） | 90.52% |
 | SQL 校验器覆盖率（行与分支） | 96.43% |
 | Ruff | 通过 |
@@ -38,7 +41,20 @@ EXPLAIN 默认关闭。开启后只接受校验通过的普通 SELECT/WITH，拒
 
 [pytest 输出](evidence/pytest.txt) · [JUnit XML](evidence/pytest.xml) · [覆盖率](evidence/coverage.json) · [Ruff](evidence/lint.txt) · [Mypy](evidence/types.txt)
 
-测试使用独立数据库和固定模型输出（Mock）。46 项需要真实模型密钥的测试被跳过，尚未验证自然语言生成 SQL 的效果。PostgreSQL 在本地独立启动；Docker Compose 已检查配置，尚未验证容器启动。
+pytest 中的 PostgreSQL 测试和 15 个回归演示场景使用固定模型输出（Mock）。46 项原有外部模型测试未启用；真实模型通过 `demo_live.py` 单独联调。PostgreSQL 在本地独立启动；Docker Compose 已检查配置，尚未验证容器启动。
+
+2026-10-08 使用 Qwen3.6-27B，经独立 stdio 服务进程完成以下查询：
+
+| 问题 | 目标数据库 | 实际结果 |
+| --- | --- | --- |
+| 统计订单数量和总金额 | homework_sales | 3 笔，400 |
+| 统计订单数量和总金额 | homework_archive | 2 笔，1000 |
+| 查询用户 id 和 name | homework_sales | id=1，name=Alice |
+| 查询用户 password | homework_sales | security_violation，未执行 SQL |
+
+监控记录 4 次模型调用、3 次数据库查询和 1 次安全拒绝，用量为 5561 tokens，单次耗时约 21–37 秒。结果复核关闭，SQL 生成使用真实模型。原始响应、生成的 SQL、request_id、耗时和指标保存在 [live-demo.json](evidence/live-demo.json)。
+
+联调时曾遇到模型有 token 用量但正文为空的响应，配置由默认 2000-token 预算调整为 `OPENAI_MAX_TOKENS=4096` 后，上述四个场景通过。接口地址通过 `OPENAI_BASE_URL` 配置，访问密钥只存放在本地 `.env`。
 
 主要回归场景：
 
@@ -64,9 +80,13 @@ uv run pytest --cov=src --cov-report=term-missing --cov-report=json:docs/evidenc
 uv run ruff check src tests scripts *> docs/evidence/lint.txt
 uv run mypy src *> docs/evidence/types.txt
 uv run python scripts/render_evidence.py
+
+# 配置 .env 的模型参数后运行真实模型联调
+uv run python scripts/demo_live.py
+uv run python scripts/render_live_evidence.py
 ```
 
-测试输出写入 `docs/evidence/`。`render_evidence.py` 读取保存的结果，生成 `01-demo.html` 和 `02-verification.html`。
+测试输出写入 `docs/evidence/`。`render_evidence.py` 读取保存的结果，生成 `01-demo.html` 和 `02-verification.html`；`render_live_evidence.py` 生成 `03-live-query.html` 和 `04-live-security.html`。同名 PNG 为这些报告的浏览器截图。
 
 ## 已知限制
 

@@ -45,7 +45,10 @@ class SQLGenerator:
         """
         self.config = config
         self.client = AsyncOpenAI(
-            api_key=config.api_key.get_secret_value(), timeout=config.timeout, max_retries=0
+            api_key=config.api_key.get_secret_value(),
+            base_url=config.base_url,
+            timeout=config.timeout,
+            max_retries=0,
         )
 
     async def generate(
