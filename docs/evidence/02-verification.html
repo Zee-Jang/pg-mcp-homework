@@ -21,28 +21,28 @@ white-space:pre-wrap;word-break:break-word;margin:0;background:#102b3c;color:#e6
 border-radius:12px;padding:20px}.note{padding:17px 21px;border-left:4px solid #19a38c;
 background:#e2f0ef;font-size:15px;margin-top:22px}.foot{margin-top:20px;font-size:13px;color:#668094}
 .compact td{padding:10px 0}.metric{font-family:Consolas,monospace;font-size:14px}
-</style><main><span class="stamp">2026-10-08 13:35:55+08:00</span><div class="eyebrow">AI 编程实战营 / 第 2 次作业 / 研发岗</div><h1>回归测试与运行观测</h1>
+</style><main><span class="stamp">2026-10-08 13:35:55+08:00</span><div class="eyebrow">PostgreSQL MCP / 测试记录</div><h1>回归测试与运行观测</h1>
     <div class="sub">回归测试、真实 PostgreSQL 集成测试、运行指标与请求追踪</div>
     <div class="cards four">
       <div class="card"><small>测试通过</small><strong class="ok">341</strong><small>46 项外部依赖测试跳过</small></div>
-      <div class="card"><small>失败 / 错误</small><strong>0 / 0</strong><small>读取实际 JUnit XML</small></div>
+      <div class="card"><small>失败 / 错误</small><strong>0 / 0</strong><small>JUnit 测试结果</small></div>
       <div class="card"><small>整体覆盖率</small><strong>90.52%</strong><small>行与分支联合统计</small></div>
       <div class="card"><small>SQL 校验覆盖率</small><strong>96.43%</strong><small>行与分支联合统计</small></div>
     </div>
     <div class="grid">
-      <div class="panel"><h2>演示期间的真实指标增量</h2><table class="compact"><tr><th>Prometheus 指标</th><th>增量</th></tr><tr><td class="metric">pg_mcp_db_query_duration_seconds_count</td><td>7</td></tr><tr><td class="metric">pg_mcp_llm_calls_total</td><td>13</td></tr><tr><td class="metric">pg_mcp_query_duration_seconds_count</td><td>15</td></tr><tr><td class="metric">pg_mcp_query_requests_total</td><td>15</td></tr><tr><td class="metric">pg_mcp_sql_rejected_total</td><td>4</td></tr></table></div>
-      <div class="panel"><h2>自动化验证摘要</h2><pre>341 passed, 46 skipped
+      <div class="panel"><h2>运行指标增量</h2><table class="compact"><tr><th>Prometheus 指标</th><th>增量</th></tr><tr><td class="metric">pg_mcp_db_query_duration_seconds_count</td><td>7</td></tr><tr><td class="metric">pg_mcp_llm_calls_total</td><td>13</td></tr><tr><td class="metric">pg_mcp_query_duration_seconds_count</td><td>15</td></tr><tr><td class="metric">pg_mcp_query_requests_total</td><td>15</td></tr><tr><td class="metric">pg_mcp_sql_rejected_total</td><td>4</td></tr></table></div>
+      <div class="panel"><h2>测试结果</h2><pre>341 passed, 46 skipped
 0 failures, 0 errors
 
 ruff: 通过
-mypy: 通过</pre><p class="muted">跳过的原课程测试需要真实模型密钥, 不计入已通过数量。</p></div>
+mypy: 通过</pre><p class="muted">未配置模型密钥，真实模型集成测试跳过。</p></div>
     </div>
     <div class="panel"><h2>异常恢复与链路追踪</h2><table class="compact">
       <tr><td>临时故障退避重试</td><td>2 次模型测试组件调用后查询成功</td></tr>
       <tr><td>请求并发槽超限</td><td class="code">rate_limit_exceeded</td></tr>
       <tr><td>限流结束后恢复</td><td>通过</td></tr>
       <tr><td>请求 ID 隔离及传播</td><td>通过</td></tr>
-      <tr><td>一次重试请求的实际 ID</td><td class="code">18612a29-61cf-4359-9eeb-9b2d1276a8d1</td></tr>
+      <tr><td>重试请求 ID</td><td class="code">18612a29-61cf-4359-9eeb-9b2d1276a8d1</td></tr>
     </table></div>
-    <div class="note">真实 PostgreSQL + 真实 MCP 内存传输; 外部 LLM 使用固定输出测试替身, 未调用付费 API<br>覆盖率来自实际 pytest 执行; 未执行的真实模型测试不作为完成证据。</div>
-    <div class="foot">运行报告截图 · 根据 docs/evidence 原始结果生成 · 源码、测试和复现命令随作业仓库提供</div></main></html>
+    <div class="note">PostgreSQL + MCP 集成测试，模型输出固定（Mock）<br>覆盖率：pytest-cov，统计行与分支。</div>
+    <div class="foot">数据来源：docs/evidence/ · demo.json · pytest.xml · coverage.json</div></main></html>

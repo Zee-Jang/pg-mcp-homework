@@ -1,11 +1,7 @@
-"""Render saved, machine-readable execution evidence into two screenshot pages.
+"""Render demo responses, pytest results and coverage as HTML reports."""
 
-No test status or count is invented: inputs must exist from an actual run.
-Open the resulting HTML in a browser to inspect or capture the report.
-"""
-
-# HTML/CSS template lines are kept intact for comparison with the rendered output.
-# ruff: noqa: E501
+# Report templates use long lines and Chinese punctuation.
+# ruff: noqa: E501, RUF001
 
 import html
 import json
@@ -50,10 +46,10 @@ def page(title: str, body: str, stamp: str) -> str:
         '<!doctype html><html lang="zh-CN"><meta charset="utf-8">'
         f"<title>{escape(title)}</title><style>{CSS}</style><main>"
         f'<span class="stamp">{escape(stamp)}</span>'
-        '<div class="eyebrow">AI 编程实战营 / 第 2 次作业 / 研发岗</div>'
+        '<div class="eyebrow">PostgreSQL MCP / 测试记录</div>'
         f"<h1>{escape(title)}</h1>{body}"
-        '<div class="foot">运行报告截图 · 根据 docs/evidence 原始结果生成 · '
-        "源码、测试和复现命令随作业仓库提供</div></main></html>"
+        '<div class="foot">数据来源：docs/evidence/ · demo.json · pytest.xml · '
+        "coverage.json</div></main></html>"
     )
 
 
@@ -98,14 +94,14 @@ def render() -> None:
     <div class="cards">
       <div class="card"><small>销售库 · {sales["n"]} 笔订单</small><strong>{sales["total"]:,.0f}</strong><small class="code">{escape(sales["db"])}</small></div>
       <div class="card"><small>归档库 · {archive["n"]} 笔订单</small><strong>{archive["total"]:,.0f}</strong><small class="code">{escape(archive["db"])}</small></div>
-      <div class="card"><small>实际演示场景</small><strong class="ok">{successful} / {len(cases)}</strong><small>正常、异常及恢复路径均有断言</small></div>
+      <div class="card"><small>场景通过</small><strong class="ok">{successful} / {len(cases)}</strong><small>正常查询、异常处理与恢复</small></div>
     </div>
-    <div class="panel"><h2>实际执行的跨库查询</h2><pre>{escape(cases["销售库路由"]["response"]["generated_sql"])}</pre></div>
+    <div class="panel"><h2>查询 SQL</h2><pre>{escape(cases["销售库路由"]["response"]["generated_sql"])}</pre></div>
     <div class="grid">
       <div class="panel"><h2>访问控制与 EXPLAIN</h2><table><tr><th>场景</th><th>行为</th><th>结果</th></tr>{rows}</table></div>
-      <div class="panel"><h2>实际拒绝响应 · 密码列</h2><pre>{escape(json.dumps(rejection, ensure_ascii=False, indent=2))}</pre></div>
+      <div class="panel"><h2>密码列查询响应</h2><pre>{escape(json.dumps(rejection, ensure_ascii=False, indent=2))}</pre></div>
     </div>
-    <div class="note">{escape(demo["mode"])}<br>数据库: {escape(demo["postgres_version"])}</div>
+    <div class="note">PostgreSQL + MCP 集成测试，模型输出固定（Mock）<br>数据库: {escape(demo["postgres_version"])}</div>
     """
     (EVIDENCE / "01-demo.html").write_text(
         page("双库路由与访问控制", body, stamp), encoding="utf-8"
@@ -131,22 +127,22 @@ def render() -> None:
     <div class="sub">回归测试、真实 PostgreSQL 集成测试、运行指标与请求追踪</div>
     <div class="cards four">
       <div class="card"><small>测试通过</small><strong class="ok">{passed}</strong><small>{totals["skipped"]} 项外部依赖测试跳过</small></div>
-      <div class="card"><small>失败 / 错误</small><strong>{totals["failures"]} / {totals["errors"]}</strong><small>读取实际 JUnit XML</small></div>
+      <div class="card"><small>失败 / 错误</small><strong>{totals["failures"]} / {totals["errors"]}</strong><small>JUnit 测试结果</small></div>
       <div class="card"><small>整体覆盖率</small><strong>{coverage["totals"]["percent_covered"]:.2f}%</strong><small>行与分支联合统计</small></div>
       <div class="card"><small>SQL 校验覆盖率</small><strong>{security["summary"]["percent_covered"]:.2f}%</strong><small>行与分支联合统计</small></div>
     </div>
     <div class="grid">
-      <div class="panel"><h2>演示期间的真实指标增量</h2><table class="compact"><tr><th>Prometheus 指标</th><th>增量</th></tr>{metrics}</table></div>
-      <div class="panel"><h2>自动化验证摘要</h2><pre>{escape(test_summary)}</pre><p class="muted">跳过的原课程测试需要真实模型密钥, 不计入已通过数量。</p></div>
+      <div class="panel"><h2>运行指标增量</h2><table class="compact"><tr><th>Prometheus 指标</th><th>增量</th></tr>{metrics}</table></div>
+      <div class="panel"><h2>测试结果</h2><pre>{escape(test_summary)}</pre><p class="muted">未配置模型密钥，真实模型集成测试跳过。</p></div>
     </div>
     <div class="panel"><h2>异常恢复与链路追踪</h2><table class="compact">
       <tr><td>临时故障退避重试</td><td>{retry["model_calls"]} 次模型测试组件调用后查询成功</td></tr>
       <tr><td>请求并发槽超限</td><td class="code">{escape(limit["response"]["error"]["code"])}</td></tr>
       <tr><td>限流结束后恢复</td><td>{"通过" if cases["限流后恢复查询"]["passed"] else "失败"}</td></tr>
       <tr><td>请求 ID 隔离及传播</td><td>{"通过" if demo["request_tracing_passed"] else "失败"}</td></tr>
-      <tr><td>一次重试请求的实际 ID</td><td class="code">{escape(retry["response"]["request_id"])}</td></tr>
+      <tr><td>重试请求 ID</td><td class="code">{escape(retry["response"]["request_id"])}</td></tr>
     </table></div>
-    <div class="note">{escape(demo["mode"])}<br>覆盖率来自实际 pytest 执行; 未执行的真实模型测试不作为完成证据。</div>
+    <div class="note">PostgreSQL + MCP 集成测试，模型输出固定（Mock）<br>覆盖率：pytest-cov，统计行与分支。</div>
     """
     (EVIDENCE / "02-verification.html").write_text(
         page("回归测试与运行观测", body2, stamp), encoding="utf-8"

@@ -1,65 +1,59 @@
-# 第二次作业：PostgreSQL MCP 功能补全与质量改进
+# 实现与测试记录
 
-## 作业简介（可用于提交说明）
+## 数据库路由
 
-这次作业在课程 PostgreSQL MCP 项目的基础上修改，主要处理多库查询、访问控制和请求处理流程中的问题。
+原项目可以按库名读取 Schema，但 SQL 始终交给同一个执行器。启动时改为根据 `DATABASES` 分别创建连接池和执行器，请求中的库名同时决定 Schema 和执行器。未配置的库名直接拒绝；配置多个数据库时，省略库名也会返回错误，不进入模型调用。
 
-原项目虽然有选库参数，但执行 SQL 时仍使用固定执行器。修改后，Schema 和执行器按同一个库名选择，用两套订单数据验证了实际查询结果。表、列和 EXPLAIN 的限制也接入了执行前的校验，并补上别名、子查询、通配符、整行引用和关联子查询的检查。
+使用两套订单数据检查路由：`homework_sales` 返回 3 笔订单、总额 400，`homework_archive` 返回 2 笔订单、总额 1000。响应中的 `current_database()` 与请求库名一致。
 
-请求处理增加了查询与模型调用的并发限制，临时调用失败按配置退避重试。日志、响应通过 request_id 对应，Prometheus 记录请求次数、耗时和安全拒绝次数。此外，清理了重复的 to_dict 方法，修复配置加载和错误响应的 token 用量问题。下面的测试输出与演示数据均来自实际执行。
+## SQL 访问控制
 
-## 实现细节
+`blocked_tables`、`blocked_columns` 和 `allow_explain` 从配置传入 SQL 校验器。SQLGlot 解析后检查表和列的来源，覆盖别名、嵌套查询、通配符、整行引用以及关联子查询。未限定表名的列需要考虑外层作用域；带 Schema 的列引用不能被同名局部别名遮蔽。
 
-| 问题 | 原行为 | 修复后 |
-| --- | --- | --- |
-| 数据库路由 | Schema 可以选库，但执行器始终固定；启动只创建单库连接池 | DATABASES 配置创建多个连接池及执行器，Schema 和 SQL 在同一目标库处理 |
-| 访问控制 | 启动将 blocked_tables/blocked_columns 设置为 None | 从配置加载限制，并在 SQL 执行前检查 |
-| EXPLAIN | 开关固定；允许时不校验内部 SQL | 默认禁止，开启仅支持校验后的普通 EXPLAIN SELECT/WITH，拒绝 ANALYZE 等不支持的形式 |
-| 限流 | 组件存在但未接入请求 | 请求和模型分别限制并发；等待超时给出明确错误，取消/失败释放资源 |
-| 重试 | SQL 纠错循环存在，但没有临时错误退避 | 区分临时与永久错误；按次数、倍率及最大延迟执行退避 |
-| 可观测性 | 指标、追踪组件未贯穿主流程 | 实际记录请求、耗时、模型调用和拒绝次数，响应/阶段日志共用 request_id |
-| 响应模型 | 第二个 to_dict 覆盖第一个实现 | 只保留一个序列化入口，tokens_used 始终有稳定默认值 |
-| 配置与日志 | .env 的扁平配置未正确进入各子配置；日志可能占用 stdout | 配置生效并有测试，日志改为 stderr 以兼容 MCP stdio |
+EXPLAIN 默认关闭。开启后只接受校验通过的普通 SELECT/WITH，拒绝 ANALYZE、写语句及未支持的选项。SQL 执行保留只读事务，超时、search_path 和角色设置改为 SET LOCAL，避免影响连接池中的后续请求。
 
-核心位置：`config/settings.py`、`server.py`、`services/orchestrator.py`、`services/sql_validator.py`、`models/query.py`、`resilience/`、`observability/`。
+## 请求处理
 
-## 验证记录
+查询与模型调用分别使用并发限制器，等待超时返回 `rate_limit_exceeded`，异常或取消后释放槽位。模型的超时、连接失败、429 和 5xx 错误采用有上限的指数退避；认证失败和安全拒绝不重试。
 
-本地环境：Windows、Python 3.14.6、PostgreSQL 17.11。代码来源固定为上游提交 `4f1be7c93cb14858d91e7aaf33d5f44388cc4302`。
+通过 ContextVar 传递 request_id，响应和各阶段日志可以对应。请求数、模型调用次数、耗时和安全拒绝次数写入 Prometheus。日志输出到 stderr，避免影响 stdio 协议。
 
-- 全套测试：**341 通过，46 跳过，0 失败**。
-- 真实 PostgreSQL + MCP 集成测试：**14 通过**，包含在全套通过数量内。
-- 独立运行演示：**15/15 场景通过**。
-- 行与分支联合覆盖率：整体 **90.52%**，SQL 校验器 **96.43%**。
-- Ruff：通过；Mypy：31 个源文件检查通过。
-- 原项目基线：247 个单元测试通过、1 个失败，Ruff/Mypy 各 4 个问题。
+响应模型只保留一个 to_dict 方法，检查成功、错误和数据字段的一致性。失败响应也保留已统计的 token 用量。环境变量和 .env 中的扁平配置映射到各子配置，缓存开关和问题长度限制接入请求流程。
 
-[完整测试输出](evidence/pytest.txt) · [JUnit XML](evidence/pytest.xml) · [覆盖率 JSON](evidence/coverage.json) · [Lint](evidence/lint.txt) · [类型检查](evidence/types.txt)
+## 测试结果
 
-46 项跳过的原课程测试依赖真实模型密钥。本次没有该密钥，不计入已通过数量。真实数据库测试使用专门创建的演示数据，不接触业务数据库。
+环境：Windows、Python 3.14.6、PostgreSQL 17.11。
 
-## 运行演示
+| 检查项 | 结果 |
+| --- | --- |
+| pytest | 341 通过，46 跳过，0 失败 |
+| PostgreSQL / MCP 集成测试 | 14 通过，包含在上述数量中 |
+| 演示脚本 | 15/15 通过 |
+| 整体覆盖率（行与分支） | 90.52% |
+| SQL 校验器覆盖率（行与分支） | 96.43% |
+| Ruff | 通过 |
+| Mypy | 31 个源文件通过 |
 
-1. 同样的“统计订单总额”问题指定 `homework_sales`，返回库名、3 笔订单、总额 400。
-2. 指定 `homework_archive`，返回库名、2 笔订单、总额 1000，证明实际切换了执行器。
-3. 查询普通用户字段成功；访问密码列、用户通配符、审计表返回 security_violation。
-4. 普通 EXPLAIN 成功；EXPLAIN ANALYZE 被拒绝。
-5. 未知库名和多库时省略库名被拒绝，均未调用模型。
-6. 模拟第一次模型超时，退避后再次调用成功；安全拒绝不重试。
-7. 占满并发槽时第二个请求返回 rate_limit_exceeded；槽位释放后查询恢复。
-8. 请求拥有独立的 request_id，传到模型调用阶段；指标请求数实际增加 15，安全拒绝增加 4。
+修改前的基线为 247 个单元测试通过、1 个失败，Ruff 和 Mypy 各有 4 个问题。
 
-**边界说明：数据库、MCP 调用和应用流程均真实执行；外部模型在演示中使用固定输出测试组件。该演示未验证真实模型的自然语言理解质量，也未调用付费 API。** 原始响应见 [demo.json](evidence/demo.json)，日志见 [demo-trace.txt](evidence/demo-trace.txt)。
+[pytest 输出](evidence/pytest.txt) · [JUnit XML](evidence/pytest.xml) · [覆盖率](evidence/coverage.json) · [Ruff](evidence/lint.txt) · [Mypy](evidence/types.txt)
 
-## 效果图
+测试使用独立数据库和固定模型输出（Mock）。46 项需要真实模型密钥的测试被跳过，尚未验证自然语言生成 SQL 的效果。PostgreSQL 在本地独立启动；Docker Compose 已检查配置，尚未验证容器启动。
 
-以下图片是将实际测试/运行结果渲染成报告后截取的页面，保留了验证边界和数据来源。
+主要回归场景：
 
-![双库路由与访问控制](evidence/01-demo.png)
+- 相同查询切换数据库，返回不同的订单数量和总额。
+- 普通字段可查询，密码列、受限通配符和审计表在执行前被拒绝。
+- 关联子查询中的外层敏感列、带 Schema 的同名别名绕过被拒绝。
+- 普通 EXPLAIN 可执行，EXPLAIN ANALYZE 和写语句被拒绝。
+- 模拟首次模型超时，退避后恢复；安全拒绝不重试。
+- 并发槽占满时请求被拒绝，释放后恢复查询。
+- 以独立进程启动 `python -m pg_mcp`，能通过 stdio 列出 query 工具并调用。
+- request_id 在请求间隔离，失败响应保留 token 用量。
 
-![回归测试与运行观测](evidence/02-verification.png)
+演示响应见 [demo.json](evidence/demo.json)，阶段日志见 [demo-trace.txt](evidence/demo-trace.txt)。
 
-## 复现命令
+## 复现
 
 ```powershell
 uv sync --extra dev
@@ -72,21 +66,10 @@ uv run mypy src *> docs/evidence/types.txt
 uv run python scripts/render_evidence.py
 ```
 
-本次电脑的 Docker 引擎不可用，因此实际验证使用了工作目录内独立启动的 PostgreSQL 二进制实例；Docker 配置提供了相同初始化数据，尚未在本机通过 Docker 启动验证。
+测试输出写入 `docs/evidence/`。`render_evidence.py` 读取保存的结果，生成 `01-demo.html` 和 `02-verification.html`。
 
-每条检查命令执行后请确认退出码为 0，并查看对应文本文件；脚本不会替代对失败结果的判断。最后一条命令根据保存的原始结果生成报告页面，打开 `docs/evidence/01-demo.html` 与 `02-verification.html` 即可重新截图。
+## 已知限制
 
-## 提交方法
-
-1. 将项目源码和文档上传到自己的 GitHub / Gitee 仓库。
-2. 在作业入口粘贴仓库链接；确保批改老师能够访问。
-3. 上传 `docs/evidence/01-demo.png` 与 `docs/evidence/02-verification.png`。
-4. 需要文字说明时，可使用本文件“作业简介”，并保留真实模型尚未验证的说明。
-
-## 限制与后续改进
-
-- 并发限流不是按用户/每秒配额限流；当前作业为单进程服务。
-- SQL AST 校验采取保守策略，不支持的复杂来源会被拒绝；数据库最小权限仍是最终防线。
-- 视图、自定义函数、扩展内部权限需由数据库角色控制，不能依赖 SQL 字符串检查兜底。
-- tokens_used 默认 0 表示未采集，不等于真实模型没有计费；结果复核关闭或遇到非资源类错误降级时，沿用原项目的 confidence=100 默认值，不代表真实复核通过或实际准确率。
-- 生产部署、真实模型效果及分布式限流不在本次已验证范围。
+- 限流按单进程并发数计算，没有实现按用户或每秒请求量的配额。
+- 列来源不明确时采用保守拒绝，部分复杂查询可能无法执行。视图、自定义函数和扩展内部权限仍需由数据库角色约束。
+- `tokens_used=0` 表示未采集到用量。结果复核关闭或遇到非资源类错误降级时，沿用原项目的 `confidence=100` 默认值，不能用于衡量准确率。
