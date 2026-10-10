@@ -12,6 +12,7 @@ from render_evidence import CSS, EVIDENCE, escape
 def page(title: str, body: str, stamp: str) -> str:
     return (
         '<!doctype html><html lang="zh-CN"><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
         f"<title>{escape(title)}</title><style>{CSS}</style><main>"
         f'<span class="stamp">{escape(stamp)}</span>'
         '<div class="eyebrow">PostgreSQL MCP / 运行结果</div>'

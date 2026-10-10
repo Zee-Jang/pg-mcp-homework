@@ -12,7 +12,7 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "docs" / "evidence"
 CSS = """
 *{box-sizing:border-box}body{margin:0;background:#eef3f8;color:#152c43;
 font-family:'Segoe UI','Microsoft YaHei',sans-serif;font-size:17px;line-height:1.5}
-main{width:1440px;padding:46px 64px 36px;margin:auto}
+main{width:min(1440px,100%);padding:46px 64px 36px;margin:auto}
 .eyebrow{font-size:14px;letter-spacing:2px;color:#3b6f88;font-weight:700}
 h1{font-size:36px;margin:8px 0 8px;letter-spacing:-1px}h2{font-size:20px;margin:0 0 16px}
 .sub{color:#567084;font-size:16px;margin-bottom:26px}.stamp{float:right;color:#61788a;font-size:14px}
@@ -32,6 +32,11 @@ white-space:pre-wrap;word-break:break-word;margin:0;background:#102b3c;color:#e6
 border-radius:12px;padding:20px}.note{padding:17px 21px;border-left:4px solid #19a38c;
 background:#e2f0ef;font-size:15px;margin-top:22px}.foot{margin-top:20px;font-size:13px;color:#668094}
 .compact td{padding:10px 0}.metric{font-family:Consolas,monospace;font-size:14px}
+@media (max-width:760px){
+body{font-size:15px}main{padding:28px 18px 24px}.stamp{float:none;display:block;margin-bottom:8px}
+h1{font-size:28px;letter-spacing:-.5px}.sub{font-size:15px}.cards,.cards.four,.grid{grid-template-columns:1fr!important}
+.card,.panel{padding:18px}table{font-size:14px;table-layout:fixed}td:last-child{text-align:left}.tag{white-space:normal}
+}
 """
 
 
@@ -44,6 +49,7 @@ def page(title: str, body: str, stamp: str) -> str:
     """Wrap evidence with a shared readable layout."""
     return (
         '<!doctype html><html lang="zh-CN"><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
         f"<title>{escape(title)}</title><style>{CSS}</style><main>"
         f'<span class="stamp">{escape(stamp)}</span>'
         '<div class="eyebrow">PostgreSQL MCP / 测试记录</div>'
