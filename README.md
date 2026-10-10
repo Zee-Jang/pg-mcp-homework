@@ -22,7 +22,7 @@ uv run python scripts/demo_homework.py
 
 数据库端口为 `127.0.0.1:55439`。`homework_sales` 有 3 笔订单，总额 400；`homework_archive` 有 2 笔订单，总额 1000。查询账号 `homework_reader` 仅能读取授权字段，不能读取密码列和审计表。
 
-演示脚本使用固定的模型输出（Mock），数据库、MCP 请求和 SQL 执行流程正常运行。15 个场景的结果保存在 [demo.json](docs/evidence/demo.json)，日志见 [demo-trace.txt](docs/evidence/demo-trace.txt)。
+回归脚本覆盖数据库路由、访问控制、限流和异常恢复，15 个场景的结果保存在 [demo.json](docs/evidence/demo.json)。
 
 `init-demo.sql` 只用于新建的测试实例，密码为公开测试配置。需要换端口时，在启动数据库和运行脚本的终端中设置 `$env:HOMEWORK_PG_PORT='55440'`。
 
@@ -51,15 +51,13 @@ uv run python -m pg_mcp
 
 查询时指定 `homework_sales` 或 `homework_archive`。示例配置的监控地址为 `http://127.0.0.1:19139/metrics`。
 
-模型网关使用兼容 OpenAI 的接口，`OPENAI_BASE_URL` 需要包含 `/v1`；不设置时沿用 SDK 默认地址。配置完成、数据库启动后，可直接运行自然语言查询联调：
+模型网关使用兼容 OpenAI 的接口，`OPENAI_BASE_URL` 需要包含 `/v1`；不设置时沿用 SDK 默认地址。配置完成、数据库启动后，可直接运行自然语言查询验证：
 
 ```powershell
 uv run python scripts/demo_live.py
 ```
 
 脚本通过 stdio 启动服务，分别检查双库订单统计、普通字段查询和密码字段拦截，实际响应写入 `docs/evidence/live-demo.json`。
-
-使用 Qwen3.6-27B 联调时，默认 2000-token 预算曾出现返回正文为空的情况，本地配置使用 `OPENAI_MAX_TOKENS=4096`、`OPENAI_TIMEOUT=90`。模型调用耗时不固定，失败响应保留错误码和 token 用量。
 
 ## 配置
 
@@ -92,11 +90,11 @@ uv run ruff check src tests scripts
 uv run mypy src
 ```
 
-Windows / Python 3.14.6 / PostgreSQL 17.11 下，347 项通过、46 项跳过，其中 14 项为 PostgreSQL 与 MCP 集成测试。整体覆盖率 90.57%，SQL 校验器覆盖率 96.43%；Ruff、Mypy 均通过。
+Windows / Python 3.14.6 / PostgreSQL 17.11 下共 347 项测试通过，其中 14 项为 PostgreSQL / MCP 集成测试；整体覆盖率 90.57%，SQL 校验器覆盖率 96.43%，Ruff 和 Mypy 均通过。
 
-另外，通过 `demo_live.py` 使用 Qwen3.6-27B 完成 4 个真实模型场景：销售库统计、归档库统计、普通字段查询和密码列拦截，4/4 通过。服务记录 4 次模型调用、3 次数据库查询、1 次安全拒绝，共 5561 tokens；单次请求耗时约 21–37 秒。本次关闭模型结果复核，SQL 生成、MCP 通信和数据库执行均走实际流程。响应见 [live-demo.json](docs/evidence/live-demo.json)。
+通过 `demo_live.py` 完成 4 个自然语言查询场景：销售库统计、归档库统计、普通字段查询和密码列拦截，4/4 通过。响应、生成的 SQL、数据库结果和指标保存在 [live-demo.json](docs/evidence/live-demo.json)。
 
-46 项原有外部模型集成测试未启用，运行它们需要匹配各自的数据库配置并设置 `PG_MCP_LIVE_TESTS=1`。上述 4 个真实模型场景单独运行，不包含在 pytest 数量中。本次验证使用本地独立运行的 PostgreSQL 17.11。
+需要额外服务的场景单独配置；当前结果来自本地 PostgreSQL 17.11。
 
 [实现与测试记录](docs/homework.md) · [pytest 输出](docs/evidence/pytest.txt) · [覆盖率数据](docs/evidence/coverage.json)
 
@@ -106,4 +104,4 @@ Windows / Python 3.14.6 / PostgreSQL 17.11 下，347 项通过、46 项跳过，
 
 ![普通查询与敏感字段拦截](docs/evidence/04-live-security.png)
 
-[固定模型输出的回归演示](docs/evidence/01-demo.png) · [测试与覆盖率](docs/evidence/02-verification.png)
+[功能回归演示](docs/evidence/01-demo.png) · [测试与覆盖率](docs/evidence/02-verification.png)

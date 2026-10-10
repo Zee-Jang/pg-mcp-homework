@@ -1,7 +1,6 @@
 {
   "timestamp": "2026-10-08T09:30:28.472875+00:00",
   "model": "Qwen3.6-27B",
-  "mocked_model": false,
   "transport": "stdio",
   "result_validation_enabled": false,
   "cases": [

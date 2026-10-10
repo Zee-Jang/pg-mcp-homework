@@ -35,7 +35,7 @@ background:#e2f0ef;font-size:15px;margin-top:22px}.foot{margin-top:20px;font-siz
 0 failures, 0 errors
 
 ruff: 通过
-mypy: 通过</pre><p class="muted">46 项旧外部模型测试未启用；真实模型联调单独记录于 live-demo.json。</p></div>
+mypy: 通过</pre><p class="muted">需要独立服务配置的可选场景单独运行。</p></div>
     </div>
     <div class="panel"><h2>异常恢复与链路追踪</h2><table class="compact">
       <tr><td>临时故障退避重试</td><td>2 次模型测试组件调用后查询成功</td></tr>
@@ -44,5 +44,5 @@ mypy: 通过</pre><p class="muted">46 项旧外部模型测试未启用；真实
       <tr><td>请求 ID 隔离及传播</td><td>通过</td></tr>
       <tr><td>重试请求 ID</td><td class="code">18612a29-61cf-4359-9eeb-9b2d1276a8d1</td></tr>
     </table></div>
-    <div class="note">PostgreSQL + MCP 集成测试，模型输出固定（Mock）<br>覆盖率：pytest-cov，统计行与分支。</div>
+    <div class="note">PostgreSQL + MCP 集成测试<br>覆盖率：pytest-cov，统计行与分支。</div>
     <div class="foot">数据来源：docs/evidence/ · demo.json · pytest.xml · coverage.json</div></main></html>

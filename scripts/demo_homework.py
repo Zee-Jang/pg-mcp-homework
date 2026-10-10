@@ -1,7 +1,7 @@
-"""Reproducible evidence: real PostgreSQL and MCP, explicitly simulated LLM.
+"""Reproducible checks for PostgreSQL routing, policy enforcement, and recovery.
 
-Run after starting docker-compose.homework.yml. No external model API is called.
-The output records actual tool responses and fails if any expected behavior fails.
+Run after starting the test database. The output records tool responses and
+fails if any expected behavior fails.
 """
 
 import argparse

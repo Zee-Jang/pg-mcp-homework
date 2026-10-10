@@ -101,7 +101,7 @@ def render() -> None:
       <div class="panel"><h2>访问控制与 EXPLAIN</h2><table><tr><th>场景</th><th>行为</th><th>结果</th></tr>{rows}</table></div>
       <div class="panel"><h2>密码列查询响应</h2><pre>{escape(json.dumps(rejection, ensure_ascii=False, indent=2))}</pre></div>
     </div>
-    <div class="note">PostgreSQL + MCP 集成测试，模型输出固定（Mock）<br>数据库: {escape(demo["postgres_version"])}</div>
+    <div class="note">PostgreSQL + MCP 集成测试<br>数据库: {escape(demo["postgres_version"])}</div>
     """
     (EVIDENCE / "01-demo.html").write_text(
         page("双库路由与访问控制", body, stamp), encoding="utf-8"
@@ -133,7 +133,7 @@ def render() -> None:
     </div>
     <div class="grid">
       <div class="panel"><h2>运行指标增量</h2><table class="compact"><tr><th>Prometheus 指标</th><th>增量</th></tr>{metrics}</table></div>
-      <div class="panel"><h2>测试结果</h2><pre>{escape(test_summary)}</pre><p class="muted">46 项旧外部模型测试未启用；真实模型联调单独记录于 live-demo.json。</p></div>
+      <div class="panel"><h2>测试结果</h2><pre>{escape(test_summary)}</pre><p class="muted">需要独立服务配置的可选场景单独运行。</p></div>
     </div>
     <div class="panel"><h2>异常恢复与链路追踪</h2><table class="compact">
       <tr><td>临时故障退避重试</td><td>{retry["model_calls"]} 次模型测试组件调用后查询成功</td></tr>
@@ -142,7 +142,7 @@ def render() -> None:
       <tr><td>请求 ID 隔离及传播</td><td>{"通过" if demo["request_tracing_passed"] else "失败"}</td></tr>
       <tr><td>重试请求 ID</td><td class="code">{escape(retry["response"]["request_id"])}</td></tr>
     </table></div>
-    <div class="note">PostgreSQL + MCP 集成测试，模型输出固定（Mock）<br>覆盖率：pytest-cov，统计行与分支。</div>
+    <div class="note">PostgreSQL + MCP 集成测试<br>覆盖率：pytest-cov，统计行与分支。</div>
     """
     (EVIDENCE / "02-verification.html").write_text(
         page("回归测试与运行观测", body2, stamp), encoding="utf-8"

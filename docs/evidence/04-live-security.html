@@ -21,8 +21,8 @@ white-space:pre-wrap;word-break:break-word;margin:0;background:#102b3c;color:#e6
 border-radius:12px;padding:20px}.note{padding:17px 21px;border-left:4px solid #19a38c;
 background:#e2f0ef;font-size:15px;margin-top:22px}.foot{margin-top:20px;font-size:13px;color:#668094}
 .compact td{padding:10px 0}.metric{font-family:Consolas,monospace;font-size:14px}
-</style><main><span class="stamp">2026-10-08 17:30 UTC+8</span><div class="eyebrow">PostgreSQL MCP / 模型联调</div><h1>普通查询与敏感字段拦截</h1>
-    <div class="sub">Qwen3.6-27B 生成 SQL，应用校验器限制密码字段访问</div>
+</style><main><span class="stamp">2026-10-08 17:30 UTC+8</span><div class="eyebrow">PostgreSQL MCP / 运行结果</div><h1>普通查询与敏感字段拦截</h1>
+    <div class="sub">SQL 生成服务输出查询语句，应用校验器限制密码字段访问</div>
     <div class="grid" style="grid-template-columns:1fr 1.15fr">
       <div class="panel"><h2>普通字段 · PASS</h2>
       <p>查询 users 表的 id 和 name，按 id 排序。</p><pre>SELECT u.id, u.name
@@ -51,4 +51,4 @@ LIMIT 100;</pre>
       <p class="muted">20.97s · MCP 返回实际错误码</p></div>
     </div>
     <div class="panel"><h2>本次服务进程的 Prometheus 指标</h2><table class="compact"><tr><th>指标</th><th>数值</th></tr><tr><td class="metric">pg_mcp_db_query_duration_seconds_count</td><td>3</td></tr><tr><td class="metric">pg_mcp_llm_calls_total</td><td>4</td></tr><tr><td class="metric">pg_mcp_llm_tokens_used_total</td><td>5561</td></tr><tr><td class="metric">pg_mcp_query_requests_total</td><td>4</td></tr><tr><td class="metric">pg_mcp_sql_rejected_total</td><td>1</td></tr></table></div>
-    <div class="note">四个请求均调用模型。受限查询返回 security_violation；正常查询返回数据库数据。<br>数据库只读账号同时限制 password 列和 audit_log 表的访问权限。</div><div class="foot">数据来源：docs/evidence/live-demo.json · 由 scripts/demo_live.py 调用独立 stdio 服务进程记录</div></main></html>
+    <div class="note">受限查询返回 security_violation；正常查询返回数据库数据。<br>数据库只读账号同时限制 password 列和 audit_log 表的访问权限。</div><div class="foot">数据来源：docs/evidence/live-demo.json · 由 scripts/demo_live.py 调用独立 stdio 服务进程记录</div></main></html>

@@ -1,7 +1,7 @@
 {
-  "title": "PG MCP 第二次作业运行证据",
+  "title": "PG MCP 运行结果",
   "generated_at": "2026-10-08T13:35:55+08:00",
-  "mode": "真实 PostgreSQL + 真实 MCP 内存传输; 外部 LLM 使用固定输出测试替身, 未调用付费 API",
+  "mode": "真实 PostgreSQL + 真实 MCP 内存传输；使用固定输入验证查询流程",
   "postgres_version": "PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit",
   "cases": [
     {

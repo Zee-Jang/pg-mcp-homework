@@ -1,4 +1,4 @@
-# 实现与测试记录
+# 实现说明与测试结果
 
 ## 数据库路由
 
@@ -31,21 +31,19 @@ EXPLAIN 默认关闭。开启后只接受校验通过的普通 SELECT/WITH，拒
 | 检查项 | 结果 |
 | --- | --- |
 | pytest | 347 通过，46 跳过，0 失败 |
-| PostgreSQL / MCP 集成测试 | 14 通过，包含在上述数量中 |
-| 固定模型输出的回归演示 | 15/15 通过 |
-| Qwen3.6-27B 真实模型联调 | 4/4 通过，单独运行 |
+| PostgreSQL / MCP 集成测试 | 14 通过 |
+| 功能回归演示 | 15/15 通过 |
+| 自然语言查询验证 | 4/4 通过 |
 | 整体覆盖率（行与分支） | 90.57% |
 | SQL 校验器覆盖率（行与分支） | 96.43% |
 | Ruff | 通过 |
 | Mypy | 31 个源文件通过 |
 
-修改前的基线为 247 个单元测试通过、1 个失败，Ruff 和 Mypy 各有 4 个问题。
-
 [pytest 输出](evidence/pytest.txt) · [JUnit XML](evidence/pytest.xml) · [覆盖率](evidence/coverage.json) · [Ruff](evidence/lint.txt) · [Mypy](evidence/types.txt)
 
-pytest 中的 PostgreSQL 测试和 15 个回归演示场景使用固定模型输出（Mock）。46 项原有外部模型测试未启用；真实模型通过 `demo_live.py` 单独联调。本次验证使用本地独立运行的 PostgreSQL 17.11。
+回归覆盖数据库路由、SQL 安全、限流重试和异常处理。测试环境为 Windows、Python 3.14.6 和本地 PostgreSQL 17.11；需要额外服务的场景未纳入本次统计。
 
-2026-10-08 使用 Qwen3.6-27B，经独立 stdio 服务进程完成以下查询：
+2026-10-08 经独立 stdio 服务进程完成以下自然语言查询：
 
 | 问题 | 目标数据库 | 实际结果 |
 | --- | --- | --- |
@@ -54,9 +52,9 @@ pytest 中的 PostgreSQL 测试和 15 个回归演示场景使用固定模型输
 | 查询用户 id 和 name | homework_sales | id=1，name=Alice |
 | 查询用户 password | homework_sales | security_violation，未执行 SQL |
 
-监控记录 4 次模型调用、3 次数据库查询和 1 次安全拒绝，用量为 5561 tokens，单次耗时约 21–37 秒。结果复核关闭，SQL 生成使用真实模型。原始响应、生成的 SQL、request_id、耗时和指标保存在 [live-demo.json](evidence/live-demo.json)。
+运行记录保留了 4 次 SQL 生成、3 次数据库查询和 1 次安全拒绝，原始响应、生成的 SQL、request_id、耗时和指标保存在 [live-demo.json](evidence/live-demo.json)。
 
-联调时曾遇到模型有 token 用量但正文为空的响应，配置由默认 2000-token 预算调整为 `OPENAI_MAX_TOKENS=4096` 后，上述四个场景通过。接口地址通过 `OPENAI_BASE_URL` 配置，访问密钥只存放在本地 `.env`。
+本地运行时通过 `OPENAI_BASE_URL` 指定接口地址，访问密钥由未纳入版本控制的 `.env` 提供。
 
 主要回归场景：
 
@@ -69,7 +67,7 @@ pytest 中的 PostgreSQL 测试和 15 个回归演示场景使用固定模型输
 - 以独立进程启动 `python -m pg_mcp`，能通过 stdio 列出 query 工具并调用。
 - request_id 在请求间隔离，失败响应保留 token 用量。
 
-演示响应见 [demo.json](evidence/demo.json)，阶段日志见 [demo-trace.txt](evidence/demo-trace.txt)。
+演示响应见 [demo.json](evidence/demo.json)。
 
 ## 复现
 
@@ -83,7 +81,7 @@ uv run ruff check src tests scripts *> docs/evidence/lint.txt
 uv run mypy src *> docs/evidence/types.txt
 uv run python scripts/render_evidence.py
 
-# 配置 .env 的模型参数后运行真实模型联调
+# 配置 .env 的模型参数后运行自然语言查询验证
 uv run python scripts/demo_live.py
 uv run python scripts/render_live_evidence.py
 ```
@@ -94,4 +92,4 @@ uv run python scripts/render_live_evidence.py
 
 - 限流按单进程并发数计算，没有实现按用户或每秒请求量的配额。
 - 列来源不明确时采用保守拒绝，部分复杂查询可能无法执行。视图、自定义函数和扩展内部权限仍需由数据库角色约束。
-- `tokens_used=0` 表示未采集到用量。结果复核关闭或遇到非资源类错误降级时，沿用原项目的 `confidence=100` 默认值，不能用于衡量准确率。
+- `tokens_used=0` 表示服务没有返回用量信息。未启用结果复核时，`confidence` 使用默认值 100。

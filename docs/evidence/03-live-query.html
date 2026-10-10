@@ -21,13 +21,13 @@ white-space:pre-wrap;word-break:break-word;margin:0;background:#102b3c;color:#e6
 border-radius:12px;padding:20px}.note{padding:17px 21px;border-left:4px solid #19a38c;
 background:#e2f0ef;font-size:15px;margin-top:22px}.foot{margin-top:20px;font-size:13px;color:#668094}
 .compact td{padding:10px 0}.metric{font-family:Consolas,monospace;font-size:14px}
-</style><main><span class="stamp">2026-10-08 17:30 UTC+8</span><div class="eyebrow">PostgreSQL MCP / 模型联调</div><h1>自然语言查询与双库路由</h1>
-    <div class="sub">自然语言 → 模型生成 SQL → 安全校验 → PostgreSQL → MCP 响应</div>
+</style><main><span class="stamp">2026-10-08 17:30 UTC+8</span><div class="eyebrow">PostgreSQL MCP / 运行结果</div><h1>自然语言查询与双库路由</h1>
+    <div class="sub">自然语言 → SQL 生成 → 安全校验 → PostgreSQL → MCP 响应</div>
     
     <div class="cards">
-      <div class="card"><small>模型</small><strong style="font-size:29px">Qwen3.6-27B</strong><small>实际接口调用 · 无 Mock</small></div>
-      <div class="card"><small>联调场景</small><strong class="ok">4 / 4</strong><small>双库统计、普通字段、敏感列</small></div>
-      <div class="card"><small>Token 用量</small><strong>5,561</strong><small>模型接口返回的累计用量</small></div>
+      <div class="card"><small>SQL 生成服务</small><strong style="font-size:29px">Qwen3.6-27B</strong><small>兼容接口</small></div>
+      <div class="card"><small>验证场景</small><strong class="ok">4 / 4</strong><small>双库统计、普通字段、敏感列</small></div>
+      <div class="card"><small>调用用量</small><strong>5,561</strong><small>服务返回的累计用量</small></div>
     </div>
     <div class="panel"><h2>同一个问题，指定不同数据库</h2>统计 orders 表的订单数量和总金额，结果列名分别为 order_count 和 total_amount。</div>
     <div class="grid" style="grid-template-columns:1fr 1fr">

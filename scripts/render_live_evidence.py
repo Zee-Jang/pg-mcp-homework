@@ -14,7 +14,7 @@ def page(title: str, body: str, stamp: str) -> str:
         '<!doctype html><html lang="zh-CN"><meta charset="utf-8">'
         f"<title>{escape(title)}</title><style>{CSS}</style><main>"
         f'<span class="stamp">{escape(stamp)}</span>'
-        '<div class="eyebrow">PostgreSQL MCP / 模型联调</div>'
+        '<div class="eyebrow">PostgreSQL MCP / 运行结果</div>'
         f"<h1>{escape(title)}</h1>{body}"
         '<div class="foot">数据来源：docs/evidence/live-demo.json · '
         '由 scripts/demo_live.py 调用独立 stdio 服务进程记录</div></main></html>'
@@ -29,9 +29,9 @@ def render() -> None:
     ).strftime("%Y-%m-%d %H:%M UTC+8")
     cards = f"""
     <div class="cards">
-      <div class="card"><small>模型</small><strong style="font-size:29px">{escape(report["model"])}</strong><small>实际接口调用 · 无 Mock</small></div>
-      <div class="card"><small>联调场景</small><strong class="ok">{report["passed"]} / {report["total"]}</strong><small>双库统计、普通字段、敏感列</small></div>
-      <div class="card"><small>Token 用量</small><strong>{report["tokens_used"]:,}</strong><small>模型接口返回的累计用量</small></div>
+      <div class="card"><small>SQL 生成服务</small><strong style="font-size:29px">{escape(report["model"])}</strong><small>兼容接口</small></div>
+      <div class="card"><small>验证场景</small><strong class="ok">{report["passed"]} / {report["total"]}</strong><small>双库统计、普通字段、敏感列</small></div>
+      <div class="card"><small>调用用量</small><strong>{report["tokens_used"]:,}</strong><small>服务返回的累计用量</small></div>
     </div>"""
     queries = ""
     for case in cases[:2]:
@@ -43,7 +43,7 @@ def render() -> None:
         <p class="muted">耗时 {case["elapsed_seconds"]:.2f}s · {response["tokens_used"]:,} tokens · {"PASS" if case["passed"] else "FAIL"}</p>
         <div class="foot code">request_id: {escape(response["request_id"])}</div></div>"""
     body = f"""
-    <div class="sub">自然语言 → 模型生成 SQL → 安全校验 → PostgreSQL → MCP 响应</div>
+    <div class="sub">自然语言 → SQL 生成 → 安全校验 → PostgreSQL → MCP 响应</div>
     {cards}
     <div class="panel"><h2>同一个问题，指定不同数据库</h2>{escape(cases[0]["question"])}</div>
     <div class="grid" style="grid-template-columns:1fr 1fr">{queries}</div>
@@ -62,7 +62,7 @@ def render() -> None:
         for name, value in sorted(report.get("metrics", {}).items())
     )
     body2 = f"""
-    <div class="sub">{escape(report["model"])} 生成 SQL，应用校验器限制密码字段访问</div>
+    <div class="sub">SQL 生成服务输出查询语句，应用校验器限制密码字段访问</div>
     <div class="grid" style="grid-template-columns:1fr 1.15fr">
       <div class="panel"><h2>普通字段 · {"PASS" if normal["passed"] else "FAIL"}</h2>
       <p>{escape(normal["question"])}</p><pre>{escape(normal_response.get("generated_sql"))}</pre>
@@ -73,7 +73,7 @@ def render() -> None:
       <p class="muted">{denied["elapsed_seconds"]:.2f}s · MCP 返回实际错误码</p></div>
     </div>
     <div class="panel"><h2>本次服务进程的 Prometheus 指标</h2><table class="compact"><tr><th>指标</th><th>数值</th></tr>{metrics}</table></div>
-    <div class="note">四个请求均调用模型。受限查询返回 security_violation；正常查询返回数据库数据。<br>数据库只读账号同时限制 password 列和 audit_log 表的访问权限。</div>"""
+    <div class="note">受限查询返回 security_violation；正常查询返回数据库数据。<br>数据库只读账号同时限制 password 列和 audit_log 表的访问权限。</div>"""
     (EVIDENCE / "04-live-security.html").write_text(
         page("普通查询与敏感字段拦截", body2, stamp), encoding="utf-8"
     )

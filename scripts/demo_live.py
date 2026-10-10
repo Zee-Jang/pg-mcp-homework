@@ -68,7 +68,6 @@ async def run(env_file: Path, output: Path) -> bool:
     report: dict[str, Any] = {
         "timestamp": datetime.now(UTC).isoformat(),
         "model": env["OPENAI_MODEL"],
-        "mocked_model": False,
         "transport": "stdio",
         "result_validation_enabled": env.get("VALIDATION_ENABLED", "true").lower() == "true",
         "cases": [],
